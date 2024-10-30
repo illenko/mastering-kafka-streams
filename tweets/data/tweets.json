@@ -1,0 +1,36 @@
+[
+  {
+    "createdAt": 1577933872630,
+    "id": 10005,
+    "text": "Bitcoin has a lot of promise. I'm not too sure about #ethereum",
+    "lang": "en",
+    "retweet": false,
+    "source": "",
+    "user": {
+      "id": "14377870",
+      "name": "MagicalPipelines",
+      "description": "Learn something magical today.",
+      "screenName": "MagicalPipelines",
+      "url": "http://www.magicalpipelines.com",
+      "followersCount": "248247",
+      "friendsCount": "16417"
+    }
+  },
+  {
+    "createdAt": 1577933872630,
+    "id": 10006,
+    "text": "Bitcoin has a lot of promise. I'm not too sure about #ethereum",
+    "lang": "en",
+    "retweet": false,
+    "source": "",
+    "user": {
+      "id": "14377870",
+      "name": "MagicalPipelines",
+      "description": "Learn something magical today.",
+      "screenName": "MagicalPipelines",
+      "url": "http://www.magicalpipelines.com",
+      "followersCount": "248247",
+      "friendsCount": "16417"
+    }
+  }
+]

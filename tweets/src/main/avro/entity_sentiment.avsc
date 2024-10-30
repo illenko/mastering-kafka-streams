@@ -1,0 +1,35 @@
+{
+    "namespace": "com.example.tweets.avro",
+    "name": "EntitySentiment",
+    "type": "record",
+    "fields": [
+      {
+        "name": "createdAt",
+        "type": "long"
+      },
+      {
+        "name": "id",
+        "type": "long"
+      },
+      {
+        "name": "entity",
+        "type": "string"
+      },
+      {
+        "name": "text",
+        "type": "string"
+      },
+      {
+        "name": "sentimentScore",
+        "type": "double"
+      },
+      {
+        "name": "sentimentMagnitude",
+        "type": "double"
+      },
+      {
+        "name": "salience",
+        "type": "double"
+      }
+    ]
+  }

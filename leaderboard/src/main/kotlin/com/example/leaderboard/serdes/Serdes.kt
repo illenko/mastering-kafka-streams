@@ -13,15 +13,15 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class SerdesConfig {
+    
+    @Bean
+    fun scoreEventSerde(objectMapper: ObjectMapper): Serde<ScoreEvent> = JsonSerdes(objectMapper)
 
     @Bean
     fun playerSerde(objectMapper: ObjectMapper): Serde<Player> = JsonSerdes(objectMapper)
 
     @Bean
     fun productSerde(objectMapper: ObjectMapper): Serde<Product> = JsonSerdes(objectMapper)
-
-    @Bean
-    fun scoreEventSerde(objectMapper: ObjectMapper): Serde<ScoreEvent> = JsonSerdes(objectMapper)
 }
 
 class JsonSerdes<T>(

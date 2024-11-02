@@ -1,38 +1,32 @@
 package com.example.leaderboard.serdes
 
+import com.example.leaderboard.domain.Enriched
 import com.example.leaderboard.domain.Player
 import com.example.leaderboard.domain.Product
 import com.example.leaderboard.domain.ScoreEvent
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.apache.kafka.common.serialization.Deserializer
 import org.apache.kafka.common.serialization.Serde
-import org.apache.kafka.common.serialization.Serializer
+import org.apache.kafka.common.serialization.Serdes
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
-
 @Configuration
 class SerdesConfig {
-    
-    @Bean
-    fun scoreEventSerde(objectMapper: ObjectMapper): Serde<ScoreEvent> = JsonSerdes(objectMapper)
 
     @Bean
-    fun playerSerde(objectMapper: ObjectMapper): Serde<Player> = JsonSerdes(objectMapper)
+    fun scoreEventSerde(objectMapper: ObjectMapper): Serde<ScoreEvent> = createSerde(objectMapper)
 
     @Bean
-    fun productSerde(objectMapper: ObjectMapper): Serde<Product> = JsonSerdes(objectMapper)
-}
+    fun playerSerde(objectMapper: ObjectMapper): Serde<Player> = createSerde(objectMapper)
 
-class JsonSerdes<T>(
-    private val objectMapper: ObjectMapper
-) : Serde<T> {
+    @Bean
+    fun productSerde(objectMapper: ObjectMapper): Serde<Product> = createSerde(objectMapper)
 
-    override fun serializer(): Serializer<T> = Serializer { _, data ->
-        objectMapper.writeValueAsBytes(data)
-    }
+    @Bean
+    fun enrichedSerde(objectMapper: ObjectMapper): Serde<Enriched> = createSerde(objectMapper)
 
-    override fun deserializer(): Deserializer<T> = Deserializer { _, bytes ->
-        objectMapper.readValue(bytes, object : com.fasterxml.jackson.core.type.TypeReference<T>() {})
-    }
+    private inline fun <reified T> createSerde(objectMapper: ObjectMapper): Serde<T> = Serdes.serdeFrom(
+        { _, data -> objectMapper.writeValueAsBytes(data) },
+        { _, bytes -> objectMapper.readValue(bytes, T::class.java) }
+    )
 }

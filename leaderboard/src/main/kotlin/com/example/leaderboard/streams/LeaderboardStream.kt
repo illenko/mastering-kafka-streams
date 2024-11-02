@@ -3,13 +3,13 @@ package com.example.leaderboard.streams
 import com.example.leaderboard.domain.*
 import org.apache.kafka.common.serialization.Serde
 import org.apache.kafka.common.serialization.Serdes
+import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.Topology
-import org.apache.kafka.streams.kstream.Consumed
-import org.apache.kafka.streams.kstream.Joined
-import org.apache.kafka.streams.kstream.ValueJoiner
+import org.apache.kafka.streams.kstream.*
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+
 
 @Configuration
 class LeaderboardStream {
@@ -20,8 +20,8 @@ class LeaderboardStream {
         scoreEventSerde: Serde<ScoreEvent>,
         playerSerde: Serde<Player>,
         productSerde: Serde<Product>,
-
-        ): Topology {
+        enrichedSerde: Serde<Enriched>,
+    ): Topology {
 
         val scoreEvents = builder.stream("score-events", Consumed.with(Serdes.String(), scoreEventSerde))
             .selectKey { _, scoreEvent -> scoreEvent.playerId.toString() }
@@ -30,14 +30,28 @@ class LeaderboardStream {
 
         val products = builder.globalTable("products", Consumed.with(Serdes.String(), productSerde))
 
-        val scorePlayerJoiner = ValueJoiner<ScoreEvent, Player, ScoreWithPlayer> { s, p -> ScoreWithPlayer(s, p) }
+        val eventsWithPlayers = scoreEvents.join(
+            players,
+            { s, p -> ScoreWithPlayer(s, p) },
+            Joined.with(Serdes.String(), scoreEventSerde, playerSerde)
+        )
 
-        val productJoiner = ValueJoiner<ScoreWithPlayer, Product, Enriched> { s, p -> Enriched(s, p) }
+        val enrichedEvents = eventsWithPlayers.join(products,
+            { _: String?, sp: ScoreWithPlayer -> sp.scoreEvent.productId.toString() },
+            { s, p -> Enriched(s, p) }
+        )
 
-        val playerJoinedParams = Joined.with(Serdes.String(), scoreEventSerde, playerSerde)
+        val groupedEnrichedEvents =
+            enrichedEvents.groupBy(
+                { _: String, value: Enriched -> value.productId.toString() },
+                Grouped.with(Serdes.String(), enrichedSerde)
+            )
 
-        val withPlayers = scoreEvents.join(players, scorePlayerJoiner, playerJoinedParams)
-
+        val groupedPlayers: KGroupedTable<String, Player> =
+            players.groupBy(
+                { key: String, value: Player -> KeyValue.pair(key, value) },
+                Grouped.with(Serdes.String(), playerSerde)
+            )
 
         return builder.build()
     }

@@ -1,5 +1,7 @@
 package com.example.leaderboard.domain
 
+import java.util.TreeSet
+
 data class Player(
     val id: Long,
     val name: String
@@ -38,4 +40,16 @@ data class Enriched(
     )
 
     override fun compareTo(other: Enriched): Int = other.score.compareTo(score)
+}
+
+data class HighScores(
+    val highScores: TreeSet<Enriched> = TreeSet()
+) {
+    fun add(enriched: Enriched): HighScores {
+        highScores.add(enriched)
+        if (highScores.size > 3) {
+            highScores.remove(highScores.last())
+        }
+        return this
+    }
 }

@@ -3,10 +3,15 @@ package com.example.leaderboard.streams
 import com.example.leaderboard.domain.*
 import org.apache.kafka.common.serialization.Serde
 import org.apache.kafka.common.serialization.Serdes
+import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.StreamsBuilder
 import org.apache.kafka.streams.Topology
-import org.apache.kafka.streams.kstream.*
+import org.apache.kafka.streams.kstream.Consumed
+import org.apache.kafka.streams.kstream.Grouped
+import org.apache.kafka.streams.kstream.Joined
+import org.apache.kafka.streams.kstream.Materialized
+import org.apache.kafka.streams.state.KeyValueStore
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -21,6 +26,7 @@ class LeaderboardStream {
         playerSerde: Serde<Player>,
         productSerde: Serde<Product>,
         enrichedSerde: Serde<Enriched>,
+        highScoresSerde: Serde<HighScores>,
     ): Topology {
 
         val scoreEvents = builder.stream("score-events", Consumed.with(Serdes.String(), scoreEventSerde))
@@ -47,11 +53,18 @@ class LeaderboardStream {
                 Grouped.with(Serdes.String(), enrichedSerde)
             )
 
-        val groupedPlayers: KGroupedTable<String, Player> =
+        val groupedPlayers =
             players.groupBy(
                 { key: String, value: Player -> KeyValue.pair(key, value) },
                 Grouped.with(Serdes.String(), playerSerde)
             )
+
+        val highScores = groupedEnrichedEvents.aggregate(
+            { HighScores() },
+            { _: String?, value: Enriched, aggregate: HighScores -> aggregate.add(value) },
+            Materialized.`as`<String, HighScores, KeyValueStore<Bytes, ByteArray>>("leader-boards")
+                .withKeySerde(Serdes.String()).withValueSerde(highScoresSerde)
+        )
 
         return builder.build()
     }

@@ -1,9 +1,6 @@
 package com.example.leaderboard.serdes
 
-import com.example.leaderboard.domain.Enriched
-import com.example.leaderboard.domain.Player
-import com.example.leaderboard.domain.Product
-import com.example.leaderboard.domain.ScoreEvent
+import com.example.leaderboard.domain.*
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.kafka.common.serialization.Serde
 import org.apache.kafka.common.serialization.Serdes
@@ -14,19 +11,22 @@ import org.springframework.context.annotation.Configuration
 class SerdesConfig {
 
     @Bean
-    fun scoreEventSerde(objectMapper: ObjectMapper): Serde<ScoreEvent> = createSerde(objectMapper)
+    fun scoreEventSerde(mapper: ObjectMapper): Serde<ScoreEvent> = serde(mapper)
 
     @Bean
-    fun playerSerde(objectMapper: ObjectMapper): Serde<Player> = createSerde(objectMapper)
+    fun playerSerde(mapper: ObjectMapper): Serde<Player> = serde(mapper)
 
     @Bean
-    fun productSerde(objectMapper: ObjectMapper): Serde<Product> = createSerde(objectMapper)
+    fun productSerde(mapper: ObjectMapper): Serde<Product> = serde(mapper)
 
     @Bean
-    fun enrichedSerde(objectMapper: ObjectMapper): Serde<Enriched> = createSerde(objectMapper)
+    fun enrichedSerde(mapper: ObjectMapper): Serde<Enriched> = serde(mapper)
 
-    private inline fun <reified T> createSerde(objectMapper: ObjectMapper): Serde<T> = Serdes.serdeFrom(
-        { _, data -> objectMapper.writeValueAsBytes(data) },
-        { _, bytes -> objectMapper.readValue(bytes, T::class.java) }
+    @Bean
+    fun highScoresSerde(mapper: ObjectMapper): Serde<HighScores> = serde(mapper)
+
+    private inline fun <reified T> serde(mapper: ObjectMapper): Serde<T> = Serdes.serdeFrom(
+        { _, data -> mapper.writeValueAsBytes(data) },
+        { _, bytes -> mapper.readValue(bytes, T::class.java) }
     )
 }

@@ -66,6 +66,8 @@ class LeaderboardStream {
                 .withKeySerde(Serdes.String()).withValueSerde(highScoresSerde)
         )
 
+        highScores.toStream().to("high-scores")
+
         return builder.build()
     }
 }

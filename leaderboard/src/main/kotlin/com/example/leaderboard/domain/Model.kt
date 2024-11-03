@@ -52,4 +52,6 @@ data class HighScores(
         }
         return this
     }
+
+    fun toList(): List<Enriched> = highScores.toList()
 }

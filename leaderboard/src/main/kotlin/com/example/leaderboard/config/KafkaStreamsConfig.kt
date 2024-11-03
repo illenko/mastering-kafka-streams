@@ -8,6 +8,7 @@ import org.apache.kafka.streams.StreamsConfig
 import org.apache.kafka.streams.StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG
 import org.apache.kafka.streams.Topology
 import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler
+import org.apache.kafka.streams.state.HostInfo
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties
 import org.springframework.context.annotation.Bean
@@ -67,6 +68,7 @@ class KafkaStreamsConfig {
     fun kafkaStreams(
         kafkaProperties: KafkaProperties,
         topology: Topology,
+        @Value("\${server.port}") port: String,
     ): KafkaStreams {
         val props =
             Properties().apply {
@@ -76,7 +78,7 @@ class KafkaStreamsConfig {
                 put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, defaultKeySerde)
                 put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, defaultValueSerde)
                 put(StreamsConfig.STATE_DIR_CONFIG, "data")
-                put(StreamsConfig.APPLICATION_SERVER_CONFIG, "localhost:8080")
+                put(StreamsConfig.APPLICATION_SERVER_CONFIG, "localhost:$port")
                 put(JsonDeserializer.VALUE_DEFAULT_TYPE, JsonNode::class.java)
                 put(DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG, LogAndContinueExceptionHandler::class.java)
                 put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
@@ -86,4 +88,9 @@ class KafkaStreamsConfig {
             start()
         }
     }
+
+    @Bean
+    fun hostInfo(
+        @Value("\${server.port}") port: String,
+    ): HostInfo = HostInfo("localhost", port.toInt())
 }

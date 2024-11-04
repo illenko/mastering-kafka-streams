@@ -7,43 +7,54 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.apache.kafka.common.serialization.Serdes
-import org.apache.kafka.streams.KafkaStreams
+import org.apache.kafka.streams.KeyQueryMetadata
 import org.apache.kafka.streams.StoreQueryParameters
 import org.apache.kafka.streams.state.HostInfo
 import org.apache.kafka.streams.state.QueryableStoreTypes
 import org.apache.kafka.streams.state.ReadOnlyKeyValueStore
+import org.springframework.kafka.config.StreamsBuilderFactoryBean
 import org.springframework.stereotype.Service
 
 @Service
 class LeaderboardService(
     private val hostInfo: HostInfo,
-    private val streams: KafkaStreams,
+    private val factoryBean: StreamsBuilderFactoryBean,
     private val objectMapper: ObjectMapper,
 ) {
 
     fun getStore(): ReadOnlyKeyValueStore<String, HighScores?> =
-        streams.store(
+        factoryBean.kafkaStreams?.store(
             StoreQueryParameters.fromNameAndType(
                 "leader-boards",
                 QueryableStoreTypes.keyValueStore()
             )
-        )
+        ) ?: throw RuntimeException("KafkaStreams is not initialized")
 
     fun getKey(productId: String): List<Enriched>? {
         println("Starting getKey for productId: $productId")
-        val metadata = streams.queryMetadataForKey("leader-boards", productId, Serdes.String().serializer())
+        val metadata = getMetadataForKey(productId)
         println("Metadata for key $productId: $metadata")
 
-        if (hostInfo == metadata.activeHost()) {
-            println("Querying local store for key: $productId")
-            val result = getStore().get(productId)?.toList()
-            println("Local store result for key $productId: $result")
-            return result
+        return if (hostInfo == metadata.activeHost()) {
+            queryLocalStore(productId)
+        } else {
+            queryRemoteStore(metadata, productId)
         }
+    }
 
-        val remoteHost = metadata.activeHost().host()
-        val remotePort = metadata.activeHost().port()
-        val url = "http://$remoteHost:$remotePort/leaderboard/$productId"
+    private fun getMetadataForKey(productId: String) =
+        factoryBean.kafkaStreams?.queryMetadataForKey("leader-boards", productId, Serdes.String().serializer())
+            ?: throw RuntimeException("KafkaStreams is not initialized")
+
+    private fun queryLocalStore(productId: String): List<Enriched>? {
+        println("Querying local store for key: $productId")
+        val result = getStore().get(productId)?.toList()
+        println("Local store result for key $productId: $result")
+        return result
+    }
+
+    private fun queryRemoteStore(metadata: KeyQueryMetadata, productId: String): List<Enriched>? {
+        val url = buildRemoteUrl(metadata, productId)
         println("Querying remote store at URL: $url")
 
         val client = OkHttpClient()
@@ -60,5 +71,11 @@ class LeaderboardService(
             println("Parsed result for key $productId: $result")
             return result
         }
+    }
+
+    private fun buildRemoteUrl(metadata: KeyQueryMetadata, productId: String): String {
+        val remoteHost = metadata.activeHost().host()
+        val remotePort = metadata.activeHost().port()
+        return "http://$remoteHost:$remotePort/leaderboard/$productId"
     }
 }

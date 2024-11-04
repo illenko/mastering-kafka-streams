@@ -32,7 +32,6 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 
-
     implementation("org.apache.kafka:kafka-streams")
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.apache.avro:avro:$avroVersion")

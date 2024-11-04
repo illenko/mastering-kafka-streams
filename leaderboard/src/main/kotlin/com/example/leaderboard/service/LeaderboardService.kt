@@ -2,6 +2,7 @@ package com.example.leaderboard.service
 
 import com.example.leaderboard.domain.Enriched
 import com.example.leaderboard.domain.HighScores
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -29,33 +30,35 @@ class LeaderboardService(
         )
 
     fun getKey(productId: String): List<Enriched>? {
+        println("Starting getKey for productId: $productId")
         val metadata = streams.queryMetadataForKey("leader-boards", productId, Serdes.String().serializer())
-
-        getStore().get(productId)?.toList()?.let {
-            println("Querying local store for key: $productId")
-            return it
-        }
+        println("Metadata for key $productId: $metadata")
 
         if (hostInfo == metadata.activeHost()) {
             println("Querying local store for key: $productId")
-            return getStore().get(productId)?.toList()
+            val result = getStore().get(productId)?.toList()
+            println("Local store result for key $productId: $result")
+            return result
         }
 
         val remoteHost = metadata.activeHost().host()
         val remotePort = metadata.activeHost().port()
         val url = "http://$remoteHost:$remotePort/leaderboard/$productId"
+        println("Querying remote store at URL: $url")
 
         val client = OkHttpClient()
         val request = Request.Builder().url(url).build()
 
-
         client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) throw RuntimeException("Failed to fetch data from remote store")
-            println("Response from $url: ${response.body?.string()}")
-            return null
+            if (!response.isSuccessful) {
+                println("Failed to fetch data from remote store for key $productId")
+                throw RuntimeException("Failed to fetch data from remote store")
+            }
+            val responseBody = response.body?.string() ?: throw RuntimeException("Response body is null")
+            println("Response body for key $productId: $responseBody")
+            val result = objectMapper.readValue(responseBody, object : TypeReference<List<Enriched>>() {})
+            println("Parsed result for key $productId: $result")
+            return result
         }
-
     }
-
-
 }

@@ -1,9 +1,18 @@
 package com.example.monitoring.domain
 
 interface Vital {
-    fun getTimestamp(): String
+    val timestamp: String
 }
 
-class Pulse(private val timestamp: String) : Vital {
-    override fun getTimestamp(): String = timestamp
-}
+data class Pulse(override val timestamp: String) : Vital
+
+data class BodyTemp(
+    override val timestamp: String,
+    val temperature: Double,
+    val unit: String
+) : Vital
+
+data class CombinedVitals(
+    val heartRate: Int,
+    val bodyTemp: BodyTemp
+)

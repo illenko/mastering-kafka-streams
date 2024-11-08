@@ -48,7 +48,7 @@ class MonitoringTopology {
                 .count(Materialized.`as`("pulse-counts"))
                 .suppress(Suppressed.untilWindowCloses(BufferConfig.unbounded().shutDownWhenFull()))
 
-        val highPulse: KStream<String, Long> =
+        val highPulse =
             pulseCounts
                 .toStream()
                 .peek { key, value ->
@@ -63,22 +63,18 @@ class MonitoringTopology {
         val highTemp =
             tempEvents.filter { _, value -> value.temperature > 100.4 }
 
-        val joinParams =
-            StreamJoined.with(Serdes.String(), Serdes.Long(), bodyTempSerde)
-
-        val joinWindows =
-            JoinWindows.ofTimeDifferenceAndGrace(Duration.ofSeconds(60), Duration.ofSeconds(10))
-
-        val valueJoiner =
-            ValueJoiner { pulseRate: Long, bodyTemp: BodyTemp ->
-                CombinedVitals(
-                    heartRate = pulseRate.toInt(),
-                    bodyTemp = bodyTemp,
-                )
-            }
-
         val vitalsJoined =
-            highPulse.join(highTemp, valueJoiner, joinWindows, joinParams)
+            highPulse.join(
+                highTemp,
+                { pr: Long, bt: BodyTemp ->
+                    CombinedVitals(
+                        heartRate = pr.toInt(),
+                        bodyTemp = bt,
+                    )
+                },
+                JoinWindows.ofTimeDifferenceAndGrace(Duration.ofSeconds(60), Duration.ofSeconds(10)),
+                StreamJoined.with(Serdes.String(), Serdes.Long(), bodyTempSerde)
+            )
 
 
         vitalsJoined.to("alerts", Produced.with(Serdes.String(), combinedVitalsSerde))

@@ -7,11 +7,6 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class ManagementTopology {
-
     @Bean
-    fun topology(
-        builder: StreamsBuilder,
-    ): Topology {
-        return builder.build()
-    }
+    fun topology(builder: StreamsBuilder): Topology = builder.build()
 }

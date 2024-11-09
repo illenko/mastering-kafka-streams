@@ -21,7 +21,6 @@ import org.springframework.kafka.support.serializer.JsonDeserializer
 @EnableKafka
 @EnableKafkaStreams
 class KafkaStreamsConfig {
-
     @Bean(name = [KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME])
     fun kStreamsConfigs(
         kafkaProperties: KafkaProperties,
@@ -29,20 +28,21 @@ class KafkaStreamsConfig {
         @Value("\${spring.kafka.streams.properties.state.dir}") stateDir: String,
         @Value("\${server.host}") host: String,
         @Value("\${server.port}") port: String,
-    ): KafkaStreamsConfiguration = KafkaStreamsConfiguration(
-        mapOf(
-            StreamsConfig.BOOTSTRAP_SERVERS_CONFIG to kafkaProperties.bootstrapServers,
-            StreamsConfig.APPLICATION_ID_CONFIG to appName,
-            StreamsConfig.STATE_DIR_CONFIG to stateDir,
-            StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG to Serdes.String()::class.java,
-            StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG to Serdes.String()::class.java,
-            StreamsConfig.APPLICATION_SERVER_CONFIG to "$host:$port",
-            StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG to WallclockTimestampExtractor::class.java,
-            StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG to LogAndContinueExceptionHandler::class.java,
-            JsonDeserializer.VALUE_DEFAULT_TYPE to JsonNode::class.java,
-            ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to "earliest"
+    ): KafkaStreamsConfiguration =
+        KafkaStreamsConfiguration(
+            mapOf(
+                StreamsConfig.BOOTSTRAP_SERVERS_CONFIG to kafkaProperties.bootstrapServers,
+                StreamsConfig.APPLICATION_ID_CONFIG to appName,
+                StreamsConfig.STATE_DIR_CONFIG to stateDir,
+                StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG to Serdes.String()::class.java,
+                StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG to Serdes.String()::class.java,
+                StreamsConfig.APPLICATION_SERVER_CONFIG to "$host:$port",
+                StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG to WallclockTimestampExtractor::class.java,
+                StreamsConfig.DEFAULT_DESERIALIZATION_EXCEPTION_HANDLER_CLASS_CONFIG to LogAndContinueExceptionHandler::class.java,
+                JsonDeserializer.VALUE_DEFAULT_TYPE to JsonNode::class.java,
+                ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to "earliest",
+            ),
         )
-    )
 
     @Bean
     fun hostInfo(

@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: state-management
+  kafka:
+    bootstrap-servers: localhost:9092
+    streams:
+      application-id: state-management
+      properties:
+        state.dir: data
+
+server:
+  host: localhost
+  port: 8080

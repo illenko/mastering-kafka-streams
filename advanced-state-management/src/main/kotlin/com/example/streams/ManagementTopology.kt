@@ -1,4 +1,4 @@
-package com.example.management.streams
+package com.example.streams
 
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.streams.StreamsBuilder

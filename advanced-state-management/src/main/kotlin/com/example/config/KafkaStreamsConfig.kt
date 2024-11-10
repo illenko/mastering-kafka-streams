@@ -1,4 +1,4 @@
-package com.example.management.config
+package com.example.config
 
 import com.fasterxml.jackson.databind.JsonNode
 import org.apache.kafka.clients.consumer.ConsumerConfig

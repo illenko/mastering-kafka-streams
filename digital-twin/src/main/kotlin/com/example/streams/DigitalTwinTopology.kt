@@ -2,6 +2,7 @@ package com.example.streams
 
 import com.example.model.DigitalTwin
 import com.example.model.State
+import com.example.processors.DigitalTwinProcessor
 import com.example.processors.HighWindsFlatmapProcessor
 import org.apache.kafka.common.serialization.Serde
 import org.apache.kafka.common.serialization.Serdes
@@ -39,8 +40,15 @@ class DigitalTwinTopology {
             "Reported State Events",
         )
 
+        builder.addProcessor<String, State, String, DigitalTwin>(
+            "Digital Twin Processor",
+            { DigitalTwinProcessor() },
+            "High Winds Flatmap Processor",
+            "Desired State Events",
+        )
+
         val storeBuilder =
-            Stores.keyValueStoreBuilder<String, DigitalTwin>(
+            Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore("digital-twin-store"),
                 Serdes.String(),
                 digitalTwinSerde,
@@ -48,6 +56,14 @@ class DigitalTwinTopology {
 
         builder.addStateStore(
             storeBuilder,
+            "Digital Twin Processor",
+        )
+
+        builder.addSink(
+            "Digital Twin Sink",
+            "digital-twins",
+            Serdes.String().serializer(),
+            digitalTwinSerde.serializer(),
             "Digital Twin Processor",
         )
 
